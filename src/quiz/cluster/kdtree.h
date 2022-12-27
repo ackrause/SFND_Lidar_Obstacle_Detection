@@ -15,12 +15,6 @@ struct Node
 	Node(std::vector<float> arr, int setId)
 	:	point(arr), id(setId), left(NULL), right(NULL)
 	{}
-
-	~Node()
-	{
-		delete left;
-		delete right;
-	}
 };
 
 struct KdTree
@@ -31,28 +25,68 @@ struct KdTree
 	: root(NULL)
 	{}
 
-	~KdTree()
+	void insertHelper(Node *newNode, Node *&currNode, uint depth)
 	{
-		delete root;
+		if (currNode == NULL)
+		{
+			currNode = newNode;
+		}
+		else if (newNode->point[depth % 2] < currNode->point[depth % 2])
+		{
+			insertHelper(newNode, currNode->left, depth+1);
+		}
+		else
+		{
+			insertHelper(newNode, currNode->right, depth+1);
+		}
 	}
 
 	void insert(std::vector<float> point, int id)
 	{
-		// TODO: Fill in this function to insert a new point into the tree
-		// the function should create a new node and place correctly with in the root 
+		Node *newNode = new Node(point, id);
 
+		insertHelper(newNode, root, 0);
+	}
+
+	void searchHelper(std::vector<int> &ids, Node *currNode, std::vector<float> target, float distanceTol, uint depth)
+	{
+		if (currNode == NULL)
+		{
+			return;
+		}
+		// if currentNode is within distanceTol of target 
+		else if (currNode->point[0] <= (target[0] + distanceTol) &&
+				 currNode->point[0] >= (target[0] - distanceTol) &&
+				 currNode->point[1] <= (target[1] + distanceTol) &&
+				 currNode->point[1] >= (target[1] - distanceTol) &&
+				 std::sqrt(std::pow(target[0] - currNode->point[0], 2.0) + std::pow(target[1] - currNode->point[1], 2.0)) <= distanceTol)
+		{
+			ids.push_back(currNode->id);
+
+			searchHelper(ids, currNode->left, target, distanceTol, depth+1);
+			searchHelper(ids, currNode->right, target, distanceTol, depth+1);
+		}
+		else // currentNode is outside of distanceTol of target
+		{
+			if (target[depth%2] - distanceTol <= currNode->point[depth % 2])
+			{
+				searchHelper(ids, currNode->left, target, distanceTol, depth+1);
+			}
+			
+			if (target[depth%2] + distanceTol >= currNode->point[depth%2])
+			{
+				searchHelper(ids, currNode->right, target, distanceTol, depth+1);
+			}
+		}
 	}
 
 	// return a list of point ids in the tree that are within distance of target
 	std::vector<int> search(std::vector<float> target, float distanceTol)
 	{
 		std::vector<int> ids;
+
+		searchHelper(ids, root, target, distanceTol, 0);
+
 		return ids;
 	}
-	
-
 };
-
-
-
-

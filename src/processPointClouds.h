@@ -45,6 +45,15 @@ public:
     typename pcl::PointCloud<PointT>::Ptr loadPcd(std::string file);
 
     std::vector<boost::filesystem::path> streamPcd(std::string dataPath);
+
+private:
+    // coordinates of box defining roof of car (for ignoring spurious signals)
+    const float roofMinX = -2;
+    const float roofMinY = -2;
+    const float roofMinZ = -2;
+    const float roofMaxX = 3;
+    const float roofMaxY = 2;
+    const float roofMaxZ = 0;
   
 };
 #endif /* PROCESSPOINTCLOUDS_H_ */

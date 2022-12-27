@@ -5,6 +5,7 @@
 #include "../../render/box.h"
 #include <chrono>
 #include <string>
+#include <unordered_set>
 #include "kdtree.h"
 
 // Arguments:
@@ -75,12 +76,41 @@ void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Bo
 
 }
 
+void clusterHelper(int indx, std::vector<int> &cluster, std::unordered_set<int> &processedPoints, const std::vector<std::vector<float>> &points, KdTree *tree, float distanceTol)
+{
+	processedPoints.insert(indx);
+
+	cluster.push_back(indx);
+
+	std::vector<int> nearbyPoints = tree->search(points[indx], distanceTol);
+
+	for (int point : nearbyPoints)
+	{
+		if (processedPoints.count(point) > 0)
+		{
+			continue;
+		}
+
+		clusterHelper(point, cluster, processedPoints, points, tree, distanceTol);
+	}
+}
+
 std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
 {
-
-	// TODO: Fill out this function to return list of indices for each cluster
-
 	std::vector<std::vector<int>> clusters;
+	std::unordered_set<int> processedPoints;
+
+	for (int indx = 0; indx < points.size(); indx++)
+	{
+		if (processedPoints.count(indx) > 0)
+		{
+			continue;
+		}
+
+		std::vector<int> cluster;
+		clusterHelper(indx, cluster, processedPoints, points, tree, distanceTol);
+		clusters.push_back(cluster);
+	}
  
 	return clusters;
 
