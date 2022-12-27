@@ -8,9 +8,6 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/crop_box.h>
-#include <pcl/kdtree/kdtree.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_clusters.h>
 #include <pcl/common/transforms.h>
 #include <iostream>
 #include <string>
@@ -19,6 +16,11 @@
 #include <chrono>
 #include <unordered_set>
 #include "render/box.h"
+#include "kdtree.h"
+#include "ransac.h"
+#include "ransac.cpp"
+#include "euclidean_cluster.h"
+#include "euclidean_cluster.cpp"
 
 template<typename PointT>
 class ProcessPointClouds {
@@ -48,8 +50,6 @@ public:
     std::vector<boost::filesystem::path> streamPcd(std::string dataPath);
 
 private:
-    std::unordered_set<int> Ransac(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol);
-
     // coordinates of box defining roof of car (for ignoring spurious signals)
     const float roofMinX = -2;
     const float roofMinY = -2;
