@@ -13,9 +13,9 @@ std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer
 
     Car egoCar( Vect3(0,0,0), Vect3(4,2,2), Color(0,1,0), "egoCar");
     Car car1( Vect3(15,0,0), Vect3(4,2,2), Color(0,0,1), "car1");
-    Car car2( Vect3(8,-4,0), Vect3(4,2,2), Color(0,0,1), "car2");	
+    Car car2( Vect3(8,-4,0), Vect3(4,2,2), Color(0,0,1), "car2");
     Car car3( Vect3(-12,4,0), Vect3(4,2,2), Color(0,0,1), "car3");
-  
+
     std::vector<Car> cars;
     cars.push_back(egoCar);
     cars.push_back(car1);
@@ -40,11 +40,11 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     // ----------------------------------------------------
     // -----Open 3D viewer and display simple highway -----
     // ----------------------------------------------------
-    
+
     // RENDER OPTIONS
     bool renderScene = false;
     std::vector<Car> cars = initHighway(renderScene, viewer);
-    
+
     // Create Lidar sensor
     Lidar* lidarSensor = new Lidar(cars, 0);
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = lidarSensor->scan();
@@ -61,12 +61,12 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     {
         std::cout << "cluster size ";
         pointProcessor.numPoints(cluster);
-        
+
         renderPointCloud(viewer, cluster, "obstCloud"+std::to_string(clusterId), colors[clusterId]);
-        
+
         Box box = pointProcessor.BoundingBox(cluster);
         renderBox(viewer, box, clusterId);
-        
+
         ++clusterId;
     }
 
@@ -78,12 +78,30 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
     // -----------------------------------------------
     // -----Open 3D viewer and display City Block-----
     // -----------------------------------------------
-    
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.3, Eigen::Vector4f(-10, -5, -2, 1), Eigen::Vector4f(30, 8, 2, 1));
 
-    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 100, 0.2);
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, 0.5, 10, 500);
+    // Hyperparameters
+    // FilterCloud
+    float voxelDim = 0.3;
+    Eigen::Vector4f minPoint(-10, -6.5, -2, 1);
+    Eigen::Vector4f maxPoint(30, 6.5, 2, 1);
 
+    // SegmentPlane
+    int maxIterations = 30;
+    float distanceThreshold = 0.2;
+
+    // Clustering
+    float clusterTolerance = 0.5;
+    int minSize = 10;
+    int maxSize = 500;
+
+    // Filter point cloud to a manageable size
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, voxelDim, minPoint, maxPoint);
+
+    // Parse out road and obstacles
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, maxIterations, distanceThreshold);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, clusterTolerance, minSize, maxSize);
+
+    // Render scene
     int clusterId = 0;
     std::vector<Color> colors = {Color(1,0,0), Color(1,1,0), Color(0,0,1)};
 
@@ -91,16 +109,16 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
     {
         std::cout << "cluster size ";
         pointProcessorI->numPoints(cluster);
-        
+
         renderPointCloud(viewer, cluster, "obstCloud"+std::to_string(clusterId), colors[clusterId]);
-        
+
         Box box = pointProcessorI->BoundingBox(cluster);
         renderBox(viewer, box, clusterId);
-        
+
         ++clusterId;
     }
 
-    // renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
+    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
 }
 
 
@@ -109,12 +127,12 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
 {
 
     viewer->setBackgroundColor (0, 0, 0);
-    
+
     // set camera position and angle
     viewer->initCameraParameters();
     // distance away in meters
     int distance = 16;
-    
+
     switch(setAngle)
     {
         case XY : viewer->setCameraPosition(-distance, -distance, distance, 1, 1, 0); break;
@@ -156,5 +174,5 @@ int main (int argc, char** argv)
             streamIterator = stream.begin();
 
         viewer->spinOnce ();
-    } 
+    }
 }
