@@ -1,4 +1,4 @@
-// PCL lib Functions for processing point clouds 
+// PCL lib Functions for processing point clouds
 
 #ifndef PROCESSPOINTCLOUDS_H_
 #define PROCESSPOINTCLOUDS_H_
@@ -12,11 +12,12 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/common/transforms.h>
-#include <iostream> 
-#include <string>  
+#include <iostream>
+#include <string>
 #include <vector>
 #include <ctime>
 #include <chrono>
+#include <unordered_set>
 #include "render/box.h"
 
 template<typename PointT>
@@ -47,6 +48,8 @@ public:
     std::vector<boost::filesystem::path> streamPcd(std::string dataPath);
 
 private:
+    std::unordered_set<int> Ransac(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol);
+
     // coordinates of box defining roof of car (for ignoring spurious signals)
     const float roofMinX = -2;
     const float roofMinY = -2;
@@ -54,6 +57,6 @@ private:
     const float roofMaxX = 3;
     const float roofMaxY = 2;
     const float roofMaxZ = 0;
-  
+
 };
 #endif /* PROCESSPOINTCLOUDS_H_ */
